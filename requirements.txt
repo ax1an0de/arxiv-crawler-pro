@@ -1,0 +1,10 @@
+# 手机版（Kivy）本地运行 / 测试所需依赖
+# 在桌面用 `pip install -r requirements.txt` 后可直接 `python main.py` 预览 UI 与逻辑
+kivy>=2.2.0
+aiohttp
+requests
+beautifulsoup4
+lxml
+rich
+typing_extensions
+aiofiles

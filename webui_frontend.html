@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>论文采集器 · 可视化界面</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --card:#ffffff; --ink:#1f2733; --muted:#6b7686;
+    --line:#e6eaf0; --accent:#2f6fed; --accent-soft:#eaf1ff;
+    --green:#1f9d55; --green-soft:#e7f6ee; --red:#d9534f; --red-soft:#fdecea;
+    --shadow:0 1px 3px rgba(20,30,50,.08),0 6px 18px rgba(20,30,50,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;padding:12px 20px;box-shadow:var(--shadow)}
+  header h1{font-size:17px;margin:0;font-weight:700}
+  header .sub{color:var(--muted);font-size:12px}
+  header .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 13px;border-radius:8px;
+    cursor:pointer;font-size:13px;transition:.15s;white-space:nowrap}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05);color:#fff}
+  .btn.ghost{background:transparent}
+  .layout{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
+  .sidebar{width:288px;flex:0 0 288px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:16px;box-shadow:var(--shadow);position:sticky;top:74px}
+  .main{flex:1;min-width:0}
+  .panel{margin-bottom:18px}
+  .panel h3{font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .field{margin-bottom:14px}
+  label.lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type=text],input[type=date],select{width:100%;padding:7px 9px;border:1px solid var(--line);
+    border-radius:8px;font-size:13px;background:#fff;color:var(--ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;max-height:170px;overflow:auto;padding:2px}
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;
+    padding:4px 9px;border-radius:999px;font-size:12px;cursor:pointer;user-select:none;transition:.12s}
+  .chip input{display:none}
+  .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:54px;border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:6px 4px;cursor:pointer;font-size:12px;color:var(--muted)}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .ageval{font-weight:700;color:var(--accent)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .n{font-size:26px;font-weight:800;line-height:1}
+  .stat .t{color:var(--muted);font-size:12px;margin-top:6px}
+  .stat.c1 .n{color:var(--accent)} .stat.c2 .n{color:var(--green)}
+  .stat.c3 .n{color:var(--red)} .stat.c4 .n{color:#9b59b6}
+  .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .chart h4{margin:0 0 12px;font-size:13px}
+  .bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}
+  .bar .name{width:120px;flex:0 0 120px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .track{flex:1;background:var(--bg);border-radius:6px;height:16px;overflow:hidden}
+  .bar .fill{height:100%;background:var(--accent);border-radius:6px}
+  .bar .val{width:34px;text-align:right;font-variant-numeric:tabular-nums}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 15px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:8px}
+  .card .ttl{font-weight:700;font-size:14px;line-height:1.35}
+  .card .ttl a{color:var(--ink);text-decoration:none}
+  .card .ttl a:hover{color:var(--accent)}
+  .card .zh{color:var(--muted);font-size:12.5px}
+  .card .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .tag.ven{background:#fff3e0;color:#c77700}
+  .tag.src{background:#eef0f4;color:#555}
+  .tag.ok{background:var(--green-soft);color:var(--green)}
+  .tag.no{background:var(--red-soft);color:var(--red)}
+  .card .abs{font-size:12.5px;color:#3a4452;max-height:60px;overflow:hidden;position:relative}
+  .card .abs.open{max-height:none}
+  .card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+  .card .links a{font-size:12px;color:var(--accent);text-decoration:none;margin-right:10px}
+  .card .links a:hover{text-decoration:underline}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px;background:var(--card);
+    border:1px dashed var(--line);border-radius:12px}
+  .toast{position:fixed;right:20px;bottom:20px;background:#1f2733;color:#fff;padding:11px 16px;border-radius:10px;
+    box-shadow:var(--shadow);font-size:13px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:none}
+  .count{color:var(--muted);font-size:13px;margin-bottom:10px}
+  /* ---- 文献管理：徽章 / 卡片附加 ---- */
+  .tag.read{background:#eef7ff;color:#1c6dd0}
+  .tag.st_read{background:var(--green-soft);color:var(--green)}
+  .tag.st_reading{background:#fff3e0;color:#c77700}
+  .tag.st_unread{background:#eef0f4;color:#777}
+  .tag.fav{background:#fff0f3;color:#d6336c}
+  .tag.utag{background:#f3ecff;color:#7b3fe4}
+  .star{color:#f0a020;font-size:14px}
+  .card .mgr{font-size:12px;padding:2px 9px;color:var(--accent);border:1px solid var(--accent);
+    background:#fff;border-radius:8px;cursor:pointer}
+  .card .mgr:hover{background:var(--accent-soft)}
+  /* ---- 模态框 ---- */
+  .mask{position:fixed;inset:0;background:rgba(20,30,50,.45);display:none;align-items:flex-start;
+    justify-content:center;z-index:100;padding:40px 16px;overflow:auto}
+  .mask.show{display:flex}
+  .modal{background:#fff;border-radius:14px;box-shadow:var(--shadow);width:100%;max-width:760px;
+    padding:22px 24px;margin:auto}
+  .modal h2{font-size:17px;margin:0 0 4px;line-height:1.35}
+  .modal .mlink{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .modal .mlink a{color:var(--accent);text-decoration:none}
+  .modal .grp{margin-bottom:14px}
+  .modal label.mlbl{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .modal textarea{width:100%;min-height:84px;padding:9px;border:1px solid var(--line);border-radius:8px;
+    font-size:13px;resize:vertical;font-family:inherit}
+  .modal .row2{display:flex;gap:12px;flex-wrap:wrap}
+  .modal .row2>div{flex:1;min-width:160px}
+  .rtbtns{display:flex;gap:6px}
+  .rtbtns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;
+    cursor:pointer;font-size:12px;color:var(--muted)}
+  .rtbtns button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .rate{display:flex;gap:4px;font-size:20px;cursor:pointer}
+  .rate span{color:#d9dee6;transition:.1s}
+  .rate span.on{color:#f0a020}
+  .favbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+  .favbtn.on{background:#fff0f3;border-color:#d6336c;color:#d6336c;font-weight:600}
+  .analysis{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13px;
+    display:none;line-height:1.6}
+  .analysis.show{display:block}
+  .analysis .kw{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;
+    padding:2px 9px;margin:3px 4px 0 0;font-size:12px}
+  .analysis .tt{display:inline-block;background:#f3ecff;color:#7b3fe4;border-radius:999px;padding:2px 9px;margin:3px 4px 0 0;font-size:12px}
+  .analysis h5{margin:0 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  @media(max-width:980px){.layout{flex-direction:column}.sidebar{position:static;width:100%;flex:none}
+    .stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 论文采集器</h1>
+  <span class="sub">arXiv + 人工智能顶会/顶刊 · 可视化筛选</span>
+  <span class="spacer"></span>
+  <button class="btn" id="demoBtn">加载示例数据</button>
+  <button class="btn" id="exportBtn">导出 MD/CSV</button>
+  <button class="btn primary" id="crawlBtn">▶ 开始抓取</button>
+</header>
+
+<div class="layout">
+  <!-- 筛选侧栏 -->
+  <aside class="sidebar">
+    <div class="panel">
+      <h3>论文年龄</h3>
+      <div class="field">
+        <label class="lbl">距首次提交不超过 <span class="ageval" id="ageVal">不限</span></label>
+        <input type="range" id="ageRange" min="0" max="730" value="730" />
+        <div class="seg" id="agePresets" style="margin-top:8px">
+          <button data-age="7">7天</button>
+          <button data-age="30">30天</button>
+          <button data-age="90">90天</button>
+          <button data-age="180">180天</button>
+          <button data-age="730" class="on">全部</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>关键词</h3>
+      <div class="field">
+        <input type="text" id="keyword" placeholder="标题/摘要中搜索…" />
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>标签筛选（领域 / 会议）</h3>
+      <div class="field">
+        <label class="lbl">领域（arXiv 分类）</label>
+        <div class="chips" id="catChips"></div>
+      </div>
+      <div class="field">
+        <label class="lbl">会议 / 期刊</label>
+        <div class="chips" id="venueChips"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>来源平台</h3>
+      <div class="chips" id="srcChips"></div>
+    </div>
+
+    <div class="panel">
+      <h3>状态</h3>
+      <div class="seg" id="statusSeg">
+        <button data-status="all" class="on">全部</button>
+        <button data-status="chosen">入选</button>
+        <button data-status="filtered">已过滤</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>日期范围（首次提交）</h3>
+      <div class="field"><input type="date" id="dateFrom" /></div>
+      <div class="field"><input type="date" id="dateUntil" /></div>
+    </div>
+
+    <div class="panel">
+      <h3>排序</h3>
+      <select id="sortBy">
+        <option value="date">按日期（新→旧）</option>
+        <option value="age">按论文年龄（新→旧）</option>
+        <option value="source">按来源</option>
+        <option value="venue">按会议</option>
+      </select>
+    </div>
+
+    <div class="panel">
+      <h3>阅读管理</h3>
+      <div class="field">
+        <label class="lbl">阅读状态</label>
+        <div class="seg" id="readStatusSeg">
+          <button data-read="all" class="on">全部</button>
+          <button data-read="unread">未读</button>
+          <button data-read="reading">在读</button>
+          <button data-read="read">已读</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="row">
+          <button class="btn" id="favOnlyBtn" style="flex:1">★ 仅看收藏</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">我的标签</label>
+        <div class="chips" id="userTagsChips"></div>
+      </div>
+    </div>
+
+    <button class="btn ghost" id="resetBtn" style="width:100%">重置筛选</button>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="stats">
+      <div class="stat c1"><div class="n" id="stTotal">0</div><div class="t">论文总数</div></div>
+      <div class="stat c2"><div class="n" id="stChosen">0</div><div class="t">入选</div></div>
+      <div class="stat c3"><div class="n" id="stFiltered">0</div><div class="t">已过滤</div></div>
+      <div class="stat c4"><div class="n" id="stSrc">0</div><div class="t">覆盖平台</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="chart"><h4>来源分布</h4><div id="chartSrc"></div></div>
+      <div class="chart"><h4>会议 / 期刊分布</h4><div id="chartVenue"></div></div>
+      <div class="chart"><h4>领域分布</h4><div id="chartCat"></div></div>
+      <div class="chart"><h4>主题分布（智能分类）</h4><div id="chartTopic"></div></div>
+      <div class="chart"><h4>年份时间线</h4><div id="chartYear"></div></div>
+    </div>
+
+    <div class="count" id="resultCount">—</div>
+    <div class="cards" id="cards"></div>
+    <div class="empty" id="empty" style="display:none">没有符合条件的论文。可点击右上角「加载示例数据」或「开始抓取」。</div>
+  </main>
+</div>
+
+<div class="mask" id="mask">
+  <div class="modal">
+    <h2 id="mTitle">—</h2>
+    <div class="mlink" id="mLink"></div>
+
+    <div class="grp">
+      <label class="mlbl">摘要</label>
+      <div id="mAbs" style="font-size:13px;color:#3a4452;max-height:160px;overflow:auto;background:var(--bg);
+        border:1px solid var(--line);border-radius:8px;padding:10px;line-height:1.6"></div>
+    </div>
+
+    <div class="grp row2">
+      <div>
+        <label class="mlbl">阅读状态</label>
+        <div class="rtbtns" id="mRead">
+          <button data-r="unread">未读</button>
+          <button data-r="reading">在读</button>
+          <button data-r="read">已读</button>
+        </div>
+      </div>
+      <div>
+        <label class="mlbl">评分</label>
+        <div class="rate" id="mRate"><span data-n="1">★</span><span data-n="2">★</span><span data-n="3">★</span><span data-n="4">★</span><span data-n="5">★</span></div>
+      </div>
+    </div>
+
+    <div class="grp row2">
+      <div>
+        <label class="mlbl">我的标签（逗号分隔）</label>
+        <input type="text" id="mTags" placeholder="如：鲁棒性, 需复现, 综述" />
+      </div>
+      <div>
+        <label class="mlbl">收藏</label>
+        <button class="favbtn" id="mFav">☆ 点击收藏</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label class="mlbl">阅读笔记</label>
+      <textarea id="mNotes" placeholder="记录你的理解、疑问、后续计划…"></textarea>
+    </div>
+
+    <div class="grp">
+      <button class="btn" id="mAnalyze">🤖 智能分析（关键词 / 主题 / 摘要 / 推荐标签）</button>
+      <div class="analysis" id="mAnalysis"></div>
+    </div>
+
+    <div class="acts">
+      <button class="btn ghost" id="mClose">关闭</button>
+      <button class="btn primary" id="mSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const state = { cats:[], venues:[], sources:[] };
+
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+// ---- 读取筛选参数 ----
+function getParams(){
+  const sel = (id)=>[...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.v);
+  let maxAge = $('#ageRange').value;
+  maxAge = (maxAge==="730") ? "" : maxAge;   // 730=全部（不限）
+  const df=$('#dateFrom').value, du=$('#dateUntil').value;
+  return {
+    keyword:$('#keyword').value.trim(),
+    max_age:maxAge,
+    categories:sel('catChips'),
+    venues:sel('venueChips'),
+    sources:sel('srcChips'),
+    status:$('#statusSeg button.on').dataset.status,
+    read_status:$('#readStatusSeg button.on').dataset.read,
+    favorite:$('#favOnlyBtn').classList.contains('on') ? 1 : 0,
+    user_tags:sel('userTagsChips'),
+    date_from:df, date_until:du,
+    sort_by:$('#sortBy').value,
+  };
+}
+function qs(params){
+  const p=new URLSearchParams();
+  for(const k in params){
+    const v=params[k];
+    if(Array.isArray(v)){ if(v.length) p.set(k,v.join(',')); }
+    else if(v!=="" && v!=null) p.set(k,v);
+  }
+  return p.toString();
+}
+
+// ---- 渲染标签勾选 ----
+function renderChips(containerId, items, key){
+  const c=$(`#${containerId}`); c.innerHTML='';
+  items.forEach(v=>{
+    const el=document.createElement('label');
+    el.className='chip'; el.dataset.v=v;
+    el.innerHTML=`<input type="checkbox">${esc(v)}`;
+    el.onclick=()=>{ el.classList.toggle('on'); refresh(); };
+    c.appendChild(el);
+  });
+}
+
+// ---- 渲染柱状图 ----
+function renderBars(elId, data){
+  const el=$(`#${elId}`); el.innerHTML='';
+  const entries=Object.entries(data||{});
+  if(!entries.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px">暂无数据</div>'; return; }
+  const max=Math.max(...entries.map(e=>e[1]));
+  entries.slice(0,12).forEach(([name,val])=>{
+    const pct=max?Math.round(val/max*100):0;
+    const row=document.createElement('div'); row.className='bar';
+    row.innerHTML=`<span class="name" title="${esc(name)}">${esc(name)}</span>
+      <span class="track"><span class="fill" style="width:${pct}%"></span></span>
+      <span class="val">${val}</span>`;
+    el.appendChild(row);
+  });
+}
+
+// ---- 渲染论文卡片 ----
+function renderCards(papers){
+  const wrap=$('#cards'); wrap.innerHTML='';
+  papers.forEach(p=>{
+    const card=document.createElement('div'); card.className='card'; card.dataset.url=p.url;
+    const ttl=p.title_zh||p.title;
+    const links=`<a href="${esc(p.url)}" target="_blank">原文</a>`
+      + (p.pdf_link?`<a href="${esc(p.pdf_link)}" target="_blank">PDF</a>`:``)
+      + (p.doi?`<a href="https://doi.org/${esc(p.doi)}" target="_blank">DOI</a>`:``);
+    const abs=p.abstract_zh||p.abstract;
+    const tags=[`<span class="tag src">${esc(p.source)}</span>`];
+    if(p.venue) tags.push(`<span class="tag ven">${esc(p.venue)}</span>`);
+    (p.categories||[]).forEach(c=>tags.push(`<span class="tag">${esc(c)}</span>`));
+    const stCls=p.status==='chosen'?'ok':'no';
+    tags.push(`<span class="tag ${stCls}">${p.status==='chosen'?'入选':'已过滤'}</span>`);
+    // 文献管理徽章
+    const readMap={unread:'未读',reading:'在读',read:'已读'};
+    const readCls={unread:'st_unread',reading:'st_reading',read:'st_read'}[p.read_status]||'st_unread';
+    tags.push(`<span class="tag ${readCls}">${readMap[p.read_status]||'未读'}</span>`);
+    if(p.favorite) tags.push(`<span class="tag fav">★ 收藏</span>`);
+    (p.user_tags||[]).forEach(t=>tags.push(`<span class="tag utag">${esc(t)}</span>`));
+    const rateStr=p.rating>0?`<span class="star">${'★'.repeat(p.rating)}</span>`:``;
+    card.innerHTML=`
+      <div class="ttl"><a href="${esc(p.url)}" target="_blank">${esc(ttl)}</a></div>
+      ${p.title_zh&&p.title_zh!==p.title?`<div class="zh">${esc(p.title)}</div>`:``}
+      <div class="meta">${tags.join('')}</div>
+      <div class="meta" style="color:var(--muted);font-size:12px">👤 ${esc(p.authors)} · 🗓 ${esc(p.first_submitted)} · ⏱ ${p.age!=null?p.age+'天':'-'} ${rateStr}</div>
+      <div class="abs">${esc(abs)}</div>
+      <div class="foot"><div class="links">${links}
+        <button class="mgr">管理</button></div>
+        <button class="btn ghost" style="padding:2px 8px;font-size:12px">摘要</button></div>`;
+    const absEl=card.querySelector('.abs');
+    card.querySelector('.foot .btn.ghost').onclick=()=>absEl.classList.toggle('open');
+    card.querySelector('.mgr').onclick=()=>openDetail(p);
+    wrap.appendChild(card);
+  });
+}
+
+// ---- 主刷新 ----
+let _timer=null;
+function refresh(){
+  const params=getParams();
+  fetch('/api/papers?'+qs(params)).then(r=>r.json()).then(d=>{
+    renderCards(d.papers);
+    $('#resultCount').textContent=`共匹配 ${d.count} 篇`;
+    $('#empty').style.display=d.count? 'none':'block';
+  });
+  fetch('/api/stats?'+qs(params)).then(r=>r.json()).then(s=>{
+    $('#stTotal').textContent=s.total;
+    $('#stChosen').textContent=s.chosen;
+    $('#stFiltered').textContent=s.filtered;
+    $('#stSrc').textContent=Object.keys(s.by_source||{}).length;
+    renderBars('chartSrc', s.by_source);
+    renderBars('chartVenue', s.by_venue);
+    renderBars('chartCat', s.by_category);
+    renderBars('chartTopic', s.by_topic);
+    renderBars('chartYear', s.by_year);
+  });
+}
+
+// ---- 事件绑定 ----
+$('#keyword').addEventListener('input',()=>{clearTimeout(_timer);_timer=setTimeout(refresh,250);});
+$('#sortBy').addEventListener('change',refresh);
+$('#dateFrom').addEventListener('change',refresh);
+$('#dateUntil').addEventListener('change',refresh);
+
+$('#ageRange').addEventListener('input',()=>{
+  const v=$('#ageRange').value;
+  $('#ageVal').textContent = v==="730"?"不限":(v+" 天");
+  document.querySelectorAll('#agePresets button').forEach(b=>b.classList.toggle('on',b.dataset.age===v));
+  refresh();
+});
+document.querySelectorAll('#agePresets button').forEach(b=>{
+  b.onclick=()=>{ $('#ageRange').value=b.dataset.age; $('#ageRange').dispatchEvent(new Event('input')); };
+});
+document.querySelectorAll('#statusSeg button').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('#statusSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); refresh(); };
+});
+document.querySelectorAll('#readStatusSeg button').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('#readStatusSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); refresh(); };
+});
+$('#favOnlyBtn').onclick=()=>{
+  const on=$('#favOnlyBtn').classList.toggle('on');
+  $('#favOnlyBtn').style.background=on?'#fff0f3':'';
+  $('#favOnlyBtn').style.color=on?'#d6336c':'';
+  $('#favOnlyBtn').style.borderColor=on?'#d6336c':'';
+  refresh();
+};
+
+$('#resetBtn').onclick=()=>{
+  $('#keyword').value=''; $('#dateFrom').value=''; $('#dateUntil').value='';
+  $('#ageRange').value='730'; $('#ageRange').dispatchEvent(new Event('input'));
+  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  $('#statusSeg button[data-status="all"]').click();
+  $('#readStatusSeg button[data-read="all"]').click();
+  $('#favOnlyBtn').classList.remove('on');
+  $('#favOnlyBtn').style.background=''; $('#favOnlyBtn').style.color=''; $('#favOnlyBtn').style.borderColor='';
+  $('#sortBy').value='date'; refresh();
+};
+
+$('#demoBtn').onclick=()=>{ $('#demoBtn').textContent='加载中…';
+  fetch('/api/demo',{method:'POST'}).then(r=>r.json()).then(d=>{
+    $('#demoBtn').textContent='加载示例数据'; toast(d.message);
+    loadTags(); refresh();
+  });};
+
+$('#exportBtn').onclick=()=>{ $('#exportBtn').textContent='导出中…';
+  fetch('/api/export',{method:'POST'}).then(r=>r.json()).then(d=>{
+    $('#exportBtn').textContent='导出 MD/CSV'; toast(d.message);});};
+
+$('#crawlBtn').onclick=()=>{ $('#crawlBtn').textContent='抓取中…';
+  fetch('/api/crawl',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({date_from:'',date_until:'',sources:[],keywords:[]})})
+    .then(r=>r.json()).then(d=>{ toast(d.message||'已启动'); pollCrawl(); });};
+
+function pollCrawl(){
+  const iv=setInterval(()=>{
+    fetch('/api/crawl/status').then(r=>r.json()).then(s=>{
+      if(!s.running){
+        clearInterval(iv); $('#crawlBtn').textContent='▶ 开始抓取';
+        toast(s.message||'完成'); loadTags(); refresh();
+      }
+    });
+  },1500);
+}
+
+function loadTags(){
+  if(location.protocol==='file:'){
+    // 直接双击 HTML 打开时 fetch 不可用，给出明确提示，避免筛选区空白无感知
+    ['catChips','venueChips','srcChips','userTagsChips'].forEach(id=>{
+      const c=document.getElementById(id);
+      if(c) c.innerHTML='<div style="color:var(--muted);font-size:12px">请通过 webui.py 启动服务后访问，'+
+        '本文件直接打开无法加载筛选标签</div>';
+    });
+    return;
+  }
+  fetch('/api/tags').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(t=>{
+    renderChips('catChips', t.categories, 'categories');
+    renderChips('venueChips', t.venues, 'venues');
+    renderChips('srcChips', t.sources, 'sources');
+    renderChips('userTagsChips', t.user_tags||[], 'user_tags');
+  }).catch(e=>{
+    ['catChips','venueChips','srcChips','userTagsChips'].forEach(id=>{
+      const c=document.getElementById(id);
+      if(c) c.innerHTML='<div style="color:var(--muted);font-size:12px">标签加载失败：'+e.message+'</div>';
+    });
+  });
+}
+
+// ---- 文献管理：详情模态框 ----
+let curUrl=null;
+function openDetail(p){
+  curUrl=p.url;
+  $('#mTitle').textContent=p.title_zh||p.title;
+  $('#mLink').innerHTML=`<a href="${esc(p.url)}" target="_blank">${esc(p.url)}</a>`
+    + (p.pdf_link?` · <a href="${esc(p.pdf_link)}" target="_blank">PDF</a>`:``)
+    + (p.doi?` · <a href="https://doi.org/${esc(p.doi)}" target="_blank">DOI</a>`:``);
+  $('#mAbs').textContent=p.abstract_zh||p.abstract||'(无摘要)';
+  // 阅读状态
+  document.querySelectorAll('#mRead button').forEach(b=>b.classList.toggle('on',b.dataset.r===(p.read_status||'unread')));
+  // 评分
+  const rt=parseInt(p.rating||0);
+  document.querySelectorAll('#mRate span').forEach(s=>s.classList.toggle('on',parseInt(s.dataset.n)<=rt));
+  // 标签
+  $('#mTags').value=(p.user_tags||[]).join(', ');
+  // 收藏
+  const fav=!!p.favorite;
+  $('#mFav').classList.toggle('on',fav);
+  $('#mFav').textContent=fav?'★ 已收藏':'☆ 点击收藏';
+  // 笔记
+  $('#mNotes').value=p.notes||'';
+  // 清空分析区
+  $('#mAnalysis').classList.remove('show'); $('#mAnalysis').innerHTML='';
+  $('#mask').classList.add('show');
+}
+function closeDetail(){ $('#mask').classList.remove('show'); curUrl=null; }
+
+// 评分星点击
+document.querySelectorAll('#mRate span').forEach(s=>{
+  s.onclick=()=>{ const n=parseInt(s.dataset.n);
+    document.querySelectorAll('#mRate span').forEach(x=>x.classList.toggle('on',parseInt(x.dataset.n)<=n)); };
+});
+// 收藏切换
+$('#mFav').onclick=()=>{ const on=$('#mFav').classList.toggle('on');
+  $('#mFav').textContent=on?'★ 已收藏':'☆ 点击收藏'; };
+// 关闭
+$('#mClose').onclick=closeDetail;
+$('#mask').addEventListener('click',e=>{ if(e.target===$('#mask')) closeDetail(); });
+
+// 智能分析
+$('#mAnalyze').onclick=()=>{
+  if(!curUrl) return;
+  const btn=$('#mAnalyze'); btn.textContent='分析中…';
+  fetch('/api/litman?url='+encodeURIComponent(curUrl)).then(r=>r.json()).then(d=>{
+    const kws=(d.keywords||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join('');
+    const tps=(d.topics||[]).map(t=>`<span class="tt">${esc(t.topic)}</span>`).join('');
+    const sug=(d.suggested_tags||[]).map(t=>`<span class="tt">${esc(t)}</span>`).join('');
+    $('#mAnalysis').innerHTML=`
+      <h5>关键词</h5><div>${kws||'—'}</div>
+      <h5 style="margin-top:10px">主题分类</h5><div>${tps||'—'}</div>
+      <h5 style="margin-top:10px">抽取式摘要</h5><div>${esc(d.summary||'—')}</div>
+      <h5 style="margin-top:10px">推荐标签（点击可复制填入上方）</h5><div>${sug||'—'}</div>`;
+    $('#mAnalysis').classList.add('show');
+    btn.textContent='🤖 智能分析（关键词 / 主题 / 摘要 / 推荐标签）';
+  }).catch(()=>{ btn.textContent='分析失败，重试'; });
+};
+
+// 推荐标签点击 → 追加到标签输入框
+$('#mAnalysis').addEventListener('click',e=>{
+  const t=e.target.closest('.tt'); if(!t) return;
+  const cur=$('#mTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!cur.includes(t.textContent)){ cur.push(t.textContent); $('#mTags').value=cur.join(', '); }
+});
+
+// 保存元数据
+$('#mSave').onclick=()=>{
+  if(!curUrl) return;
+  const btn=$('#mSave'); btn.textContent='保存中…';
+  const readBtn=document.querySelector('#mRead button.on');
+  const payload={
+    url:curUrl,
+    read_status:readBtn?readBtn.dataset.r:'unread',
+    rating:document.querySelectorAll('#mRate span.on').length,
+    user_tags:$('#mTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    favorite:$('#mFav').classList.contains('on')?1:0,
+    notes:$('#mNotes').value,
+  };
+  fetch('/api/paper/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(r=>r.json()).then(d=>{
+      btn.textContent='保存'; toast(d.message||'已保存'); closeDetail(); loadTags(); refresh();
+    }).catch(()=>{ btn.textContent='保存失败'; });
+};
+
+// ---- 初始化 ----
+loadTags();
+refresh();
+</script>
+</body>
+</html>
